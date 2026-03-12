@@ -136,17 +136,26 @@ class Calculator {
   useHistoryResult(index) {
     const entry = this._history[index];
     if (!entry) { return this; }
+    // Load the history value as the next operand.
+    // If an operator is pending (e.g. user typed "5 +"), the history result
+    // becomes the second operand — pressing "=" will complete the calculation.
+    // This is intentional: history acts as a number picker.
     this._current = entry.result;
     this._resetNext = true;
-    this._expression = '';
+    this._expression = this._operator
+      ? `${this._previous} ${Calculator.SYMBOLS[this._operator]}`
+      : '';
     return this;
   }
 
   toggleSign() {
     if (this._current === Calculator.ERROR || this._current === '0') { return this; }
-    this._current = this._current.startsWith('-')
-      ? this._current.slice(1)
-      : '-' + this._current;
+    if (this._current.startsWith('-')) {
+      this._current = this._current.slice(1);
+    } else {
+      // Prepend minus but keep within MAX_DIGITS + 1 (sign doesn't count as a digit)
+      this._current = ('-' + this._current).slice(0, Calculator.MAX_DIGITS + 1);
+    }
     return this;
   }
 

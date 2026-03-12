@@ -268,6 +268,14 @@ describe('Calculator', () => {
       calc.input('3').inputDot().input('5').toggleSign().toggleSign();
       expect(calc.display).toBe('3.5');
     });
+
+    test('negating MAX_DIGITS number stays within limit', () => {
+      for (let i = 0; i < Calculator.MAX_DIGITS; i++) { calc.input('9'); }
+      calc.toggleSign();
+      // sign + MAX_DIGITS digits = MAX_DIGITS + 1 chars total
+      expect(calc.display.length).toBeLessThanOrEqual(Calculator.MAX_DIGITS + 1);
+      expect(calc.display.startsWith('-')).toBe(true);
+    });
   });
 
   // ─── percent() ────────────────────────────────────────────────────────────
@@ -384,10 +392,26 @@ describe('Calculator', () => {
     test('limits history to MAX_HISTORY entries', () => {
       for (let i = 0; i < Calculator.MAX_HISTORY + 5; i++) {
         calc.input('1').setOperator('+').input('1').calculate();
-        calc._resetNext = false;
-        calc._current = '0';
+        calc.clearAll().input('0'); // use public API only
       }
       expect(calc.history.length).toBeLessThanOrEqual(Calculator.MAX_HISTORY);
+    });
+
+    test('useHistoryResult() does nothing when history is empty', () => {
+      calc.useHistoryResult(0);
+      expect(calc.display).toBe('0');
+    });
+
+    test('useHistoryResult() with pending operator uses value as second operand', () => {
+      // user types "5 +", then picks "3" from history and presses "="
+      calc.input('4').setOperator('*').input('3').calculate(); // history: 12
+      calc.clearAll();
+      calc.input('5').setOperator('+');
+      calc.useHistoryResult(0); // picks 12
+      expect(calc.display).toBe('12');
+      expect(calc.expression).toBe('5 +');
+      calc.calculate();
+      expect(calc.display).toBe('17');
     });
   });
 
