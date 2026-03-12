@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Калькулятор</title>
+  <title>Calculator</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -14,6 +14,12 @@
       min-height: 100vh;
       background: #1a1a2e;
       font-family: 'Segoe UI', sans-serif;
+    }
+
+    .wrapper {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
     }
 
     .calculator {
@@ -67,103 +73,192 @@
       transition: transform 0.1s, opacity 0.1s;
     }
 
-    button:active {
-      transform: scale(0.93);
-      opacity: 0.8;
-    }
+    button:active { transform: scale(0.93); opacity: 0.8; }
 
-    .btn-number {
-      background: #1a1a3e;
-      color: #e2e8f0;
-    }
-
+    .btn-number { background: #1a1a3e; color: #e2e8f0; }
     .btn-number:hover { background: #252550; }
 
-    .btn-operator {
-      background: #533483;
-      color: #e2e8f0;
-    }
-
+    .btn-operator { background: #533483; color: #e2e8f0; }
     .btn-operator:hover { background: #6b44a8; }
 
-    .btn-equals {
-      background: #e94560;
-      color: #fff;
-      grid-column: span 2;
-    }
-
+    .btn-equals { background: #e94560; color: #fff; grid-column: span 2; }
     .btn-equals:hover { background: #ff5c7a; }
 
-    .btn-clear {
-      background: #e94560;
-      color: #fff;
-    }
-
+    .btn-clear { background: #e94560; color: #fff; }
     .btn-clear:hover { background: #ff5c7a; }
 
-    .btn-special {
-      background: #0f3460;
-      color: #a0aec0;
-    }
-
+    .btn-special { background: #0f3460; color: #a0aec0; }
     .btn-special:hover { background: #1a4a80; }
 
-    .btn-zero {
-      grid-column: span 2;
+    .btn-zero { grid-column: span 2; }
+
+    /* ── History panel ── */
+    .history-panel {
+      background: #16213e;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      width: 220px;
+      max-height: 500px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .history-header h3 {
+      color: #a0aec0;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .btn-clear-history {
+      background: none;
+      border: 1px solid #533483;
+      border-radius: 8px;
+      color: #a0aec0;
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-clear-history:hover { background: #533483; color: #fff; }
+    .btn-clear-history:active { transform: none; opacity: 1; }
+
+    .history-list {
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-list::-webkit-scrollbar { width: 4px; }
+    .history-list::-webkit-scrollbar-track { background: transparent; }
+    .history-list::-webkit-scrollbar-thumb { background: #533483; border-radius: 4px; }
+
+    .history-item {
+      background: #0f3460;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-align: right;
+    }
+
+    .history-item:hover { background: #1a4a80; }
+
+    .history-item .h-expression {
+      color: #a0aec0;
+      font-size: 11px;
+      margin-bottom: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-item .h-result {
+      color: #e2e8f0;
+      font-size: 20px;
+      font-weight: 300;
+    }
+
+    .history-empty {
+      color: #4a5568;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <div class="calculator">
-    <div class="display">
-      <div class="expression" id="expression"></div>
-      <div class="result" id="result">0</div>
+  <div class="wrapper">
+    <div class="calculator">
+      <div class="display">
+        <div class="expression" id="expression"></div>
+        <div class="result" id="result">0</div>
+      </div>
+      <div class="buttons">
+        <button class="btn-clear" onclick="onClear()">AC</button>
+        <button class="btn-special" onclick="onToggleSign()">+/-</button>
+        <button class="btn-special" onclick="onPercent()">%</button>
+        <button class="btn-operator" onclick="onOperator('/')">÷</button>
+
+        <button class="btn-number" onclick="onInput('7')">7</button>
+        <button class="btn-number" onclick="onInput('8')">8</button>
+        <button class="btn-number" onclick="onInput('9')">9</button>
+        <button class="btn-operator" onclick="onOperator('*')">×</button>
+
+        <button class="btn-number" onclick="onInput('4')">4</button>
+        <button class="btn-number" onclick="onInput('5')">5</button>
+        <button class="btn-number" onclick="onInput('6')">6</button>
+        <button class="btn-operator" onclick="onOperator('-')">−</button>
+
+        <button class="btn-number" onclick="onInput('1')">1</button>
+        <button class="btn-number" onclick="onInput('2')">2</button>
+        <button class="btn-number" onclick="onInput('3')">3</button>
+        <button class="btn-operator" onclick="onOperator('+')">+</button>
+
+        <button class="btn-number btn-zero" onclick="onInput('0')">0</button>
+        <button class="btn-number" onclick="onInputDot()">.</button>
+        <button class="btn-equals" onclick="onCalculate()">=</button>
+      </div>
     </div>
-    <div class="buttons">
-      <button class="btn-clear" onclick="onClear()">AC</button>
-      <button class="btn-special" onclick="onToggleSign()">+/-</button>
-      <button class="btn-special" onclick="onPercent()">%</button>
-      <button class="btn-operator" onclick="onOperator('/')">÷</button>
 
-      <button class="btn-number" onclick="onInput('7')">7</button>
-      <button class="btn-number" onclick="onInput('8')">8</button>
-      <button class="btn-number" onclick="onInput('9')">9</button>
-      <button class="btn-operator" onclick="onOperator('*')">×</button>
-
-      <button class="btn-number" onclick="onInput('4')">4</button>
-      <button class="btn-number" onclick="onInput('5')">5</button>
-      <button class="btn-number" onclick="onInput('6')">6</button>
-      <button class="btn-operator" onclick="onOperator('-')">−</button>
-
-      <button class="btn-number" onclick="onInput('1')">1</button>
-      <button class="btn-number" onclick="onInput('2')">2</button>
-      <button class="btn-number" onclick="onInput('3')">3</button>
-      <button class="btn-operator" onclick="onOperator('+')">+</button>
-
-      <button class="btn-number btn-zero" onclick="onInput('0')">0</button>
-      <button class="btn-number" onclick="onInputDot()">.</button>
-      <button class="btn-equals" onclick="onCalculate()">=</button>
+    <div class="history-panel">
+      <div class="history-header">
+        <h3>History</h3>
+        <button class="btn-clear-history" onclick="onClearHistory()">Clear</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty">No calculations yet</div>
+      </div>
     </div>
   </div>
 
   <script src="calculator.js"></script>
   <script>
     const calc = new Calculator();
-    const resultEl = document.getElementById('result');
+    const resultEl     = document.getElementById('result');
     const expressionEl = document.getElementById('expression');
+    const historyList  = document.getElementById('historyList');
 
     function updateDisplay() {
-      resultEl.textContent = calc.display;
+      resultEl.textContent     = calc.display;
       expressionEl.textContent = calc.expression;
     }
 
-    function onInput(digit)   { calc.input(digit);      updateDisplay(); }
-    function onInputDot()     { calc.inputDot();         updateDisplay(); }
-    function onOperator(op)   { calc.setOperator(op);   updateDisplay(); }
-    function onCalculate()    { calc.calculate();        updateDisplay(); }
-    function onClear()        { calc.clearAll();         updateDisplay(); }
-    function onToggleSign()   { calc.toggleSign();       updateDisplay(); }
-    function onPercent()      { calc.percent();          updateDisplay(); }
+    function renderHistory() {
+      const entries = calc.history;
+      if (entries.length === 0) {
+        historyList.innerHTML = '<div class="history-empty">No calculations yet</div>';
+        return;
+      }
+      historyList.innerHTML = entries.map((e, i) => `
+        <div class="history-item" onclick="onUseHistory(${i})" title="Use this result">
+          <div class="h-expression">${e.expression}</div>
+          <div class="h-result">${e.result}</div>
+        </div>
+      `).join('');
+    }
+
+    function onInput(digit)    { calc.input(digit);       updateDisplay(); }
+    function onInputDot()      { calc.inputDot();          updateDisplay(); }
+    function onOperator(op)    { calc.setOperator(op);    updateDisplay(); }
+    function onCalculate()     { calc.calculate();         updateDisplay(); renderHistory(); }
+    function onClear()         { calc.clearAll();          updateDisplay(); }
+    function onToggleSign()    { calc.toggleSign();        updateDisplay(); }
+    function onPercent()       { calc.percent();           updateDisplay(); }
+    function onClearHistory()  { calc.clearHistory();      renderHistory(); }
+    function onUseHistory(i)   { calc.useHistoryResult(i); updateDisplay(); }
 
     document.addEventListener('keydown', (e) => {
       if (e.key >= '0' && e.key <= '9') { onInput(e.key); }
@@ -171,7 +266,7 @@
       else if (e.key === '+')                          { onOperator('+'); }
       else if (e.key === '-')                          { onOperator('-'); }
       else if (e.key === '*')                          { onOperator('*'); }
-      else if (e.key === '/') { e.preventDefault();     onOperator('/'); }
+      else if (e.key === '/') { e.preventDefault();    onOperator('/'); }
       else if (e.key === 'Enter' || e.key === '=')     { onCalculate(); }
       else if (e.key === 'Escape')                     { onClear(); }
       else if (e.key === 'Backspace') { calc.backspace(); updateDisplay(); }

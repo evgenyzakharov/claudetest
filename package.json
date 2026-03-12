@@ -4,11 +4,14 @@
   "description": "Simple calculator with unit tests",
   "scripts": {
     "test": "jest",
+    "test:watch": "jest --watchAll",
     "test:coverage": "jest --coverage",
-    "lint": "eslint calculator.js calculator.test.js"
+    "lint": "eslint calculator.js calculator.test.js",
+    "prepare": "husky"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
+    "husky": "^9.0.0",
     "jest": "^29.7.0"
   },
   "jest": {

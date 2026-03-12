@@ -193,6 +193,24 @@ describe('Calculator', () => {
       calc.setOperator('*').input('2').calculate();
       expect(calc.display).toBe('16');
     });
+
+    test('pressing = again after result does nothing (no operator pending)', () => {
+      calc.input('5').setOperator('+').input('3').calculate();
+      const result = calc.display;
+      calc.calculate();
+      expect(calc.display).toBe(result);
+    });
+
+    test('returns Error on Infinity (large number overflow)', () => {
+      // Cannot reach Infinity via normal digit input (MAX_DIGITS = 12 caps inputs at ~10^12,
+      // and Number.MAX_VALUE ≈ 1.8e308 requires repeated chaining far beyond the UI).
+      // We test the _compute guard directly by setting internal state.
+      calc._previous = Number.MAX_VALUE;
+      calc._operator = '*';
+      calc._current = '2';
+      calc.calculate();
+      expect(calc.display).toBe(Calculator.ERROR);
+    });
   });
 
   // ─── clearAll() ───────────────────────────────────────────────────────────
@@ -268,6 +286,11 @@ describe('Calculator', () => {
       calc.input('1').setOperator('/').input('0').calculate().percent();
       expect(calc.display).toBe(Calculator.ERROR);
     });
+
+    test('percent when operator is pending divides current by 100 (unconditional)', () => {
+      calc.input('2').input('0').input('0').setOperator('+').input('5').input('0').percent();
+      expect(calc.display).toBe('0.5');
+    });
   });
 
   // ─── backspace() ──────────────────────────────────────────────────────────
@@ -295,6 +318,76 @@ describe('Calculator', () => {
     test('does nothing when resetNext is active (after operator)', () => {
       calc.input('5').setOperator('+').backspace();
       expect(calc.display).toBe('5');
+    });
+
+    test('does nothing when resetNext is active (after calculate)', () => {
+      calc.input('5').setOperator('+').input('3').calculate().backspace();
+      expect(calc.display).toBe('8');
+    });
+  });
+
+  // ─── history ──────────────────────────────────────────────────────────────
+  describe('history', () => {
+    test('starts empty', () => {
+      expect(calc.history).toEqual([]);
+    });
+
+    test('records entry after calculate()', () => {
+      calc.input('5').setOperator('+').input('3').calculate();
+      expect(calc.history).toHaveLength(1);
+      expect(calc.history[0]).toEqual({ expression: '5 + 3 =', result: '8' });
+    });
+
+    test('most recent entry is first', () => {
+      calc.input('2').setOperator('+').input('3').calculate();
+      calc.input('9').setOperator('-').input('1').calculate();
+      expect(calc.history[0].result).toBe('8');
+      expect(calc.history[1].result).toBe('5');
+    });
+
+    test('does not record on division by zero', () => {
+      calc.input('5').setOperator('/').input('0').calculate();
+      expect(calc.history).toHaveLength(0);
+    });
+
+    test('does not record on chained compute (no = pressed)', () => {
+      calc.input('5').setOperator('+').input('3').setOperator('*');
+      expect(calc.history).toHaveLength(0);
+    });
+
+    test('clearHistory() empties the list', () => {
+      calc.input('5').setOperator('+').input('3').calculate();
+      calc.clearHistory();
+      expect(calc.history).toHaveLength(0);
+    });
+
+    test('clearAll() does not clear history', () => {
+      calc.input('5').setOperator('+').input('3').calculate();
+      calc.clearAll();
+      expect(calc.history).toHaveLength(1);
+    });
+
+    test('useHistoryResult() loads result into display', () => {
+      calc.input('4').setOperator('*').input('3').calculate();
+      calc.clearAll();
+      calc.useHistoryResult(0);
+      expect(calc.display).toBe('12');
+    });
+
+    test('history returns a copy (not the internal array)', () => {
+      calc.input('1').setOperator('+').input('1').calculate();
+      const h = calc.history;
+      h.push({ expression: 'fake', result: '999' });
+      expect(calc.history).toHaveLength(1);
+    });
+
+    test('limits history to MAX_HISTORY entries', () => {
+      for (let i = 0; i < Calculator.MAX_HISTORY + 5; i++) {
+        calc.input('1').setOperator('+').input('1').calculate();
+        calc._resetNext = false;
+        calc._current = '0';
+      }
+      expect(calc.history.length).toBeLessThanOrEqual(Calculator.MAX_HISTORY);
     });
   });
 
