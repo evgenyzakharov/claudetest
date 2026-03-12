@@ -120,123 +120,61 @@
       <div class="result" id="result">0</div>
     </div>
     <div class="buttons">
-      <button class="btn-clear" onclick="clearAll()">AC</button>
-      <button class="btn-special" onclick="toggleSign()">+/-</button>
-      <button class="btn-special" onclick="percent()">%</button>
-      <button class="btn-operator" onclick="setOperator('/')">÷</button>
+      <button class="btn-clear" onclick="onClear()">AC</button>
+      <button class="btn-special" onclick="onToggleSign()">+/-</button>
+      <button class="btn-special" onclick="onPercent()">%</button>
+      <button class="btn-operator" onclick="onOperator('/')">÷</button>
 
-      <button class="btn-number" onclick="input('7')">7</button>
-      <button class="btn-number" onclick="input('8')">8</button>
-      <button class="btn-number" onclick="input('9')">9</button>
-      <button class="btn-operator" onclick="setOperator('*')">×</button>
+      <button class="btn-number" onclick="onInput('7')">7</button>
+      <button class="btn-number" onclick="onInput('8')">8</button>
+      <button class="btn-number" onclick="onInput('9')">9</button>
+      <button class="btn-operator" onclick="onOperator('*')">×</button>
 
-      <button class="btn-number" onclick="input('4')">4</button>
-      <button class="btn-number" onclick="input('5')">5</button>
-      <button class="btn-number" onclick="input('6')">6</button>
-      <button class="btn-operator" onclick="setOperator('-')">−</button>
+      <button class="btn-number" onclick="onInput('4')">4</button>
+      <button class="btn-number" onclick="onInput('5')">5</button>
+      <button class="btn-number" onclick="onInput('6')">6</button>
+      <button class="btn-operator" onclick="onOperator('-')">−</button>
 
-      <button class="btn-number" onclick="input('1')">1</button>
-      <button class="btn-number" onclick="input('2')">2</button>
-      <button class="btn-number" onclick="input('3')">3</button>
-      <button class="btn-operator" onclick="setOperator('+')">+</button>
+      <button class="btn-number" onclick="onInput('1')">1</button>
+      <button class="btn-number" onclick="onInput('2')">2</button>
+      <button class="btn-number" onclick="onInput('3')">3</button>
+      <button class="btn-operator" onclick="onOperator('+')">+</button>
 
-      <button class="btn-number btn-zero" onclick="input('0')">0</button>
-      <button class="btn-number" onclick="inputDot()">.</button>
-      <button class="btn-equals" onclick="calculate()">=</button>
+      <button class="btn-number btn-zero" onclick="onInput('0')">0</button>
+      <button class="btn-number" onclick="onInputDot()">.</button>
+      <button class="btn-equals" onclick="onCalculate()">=</button>
     </div>
   </div>
 
+  <script src="calculator.js"></script>
   <script>
-    let current = '0';
-    let previous = null;
-    let operator = null;
-    let resetNext = false;
-
+    const calc = new Calculator();
     const resultEl = document.getElementById('result');
     const expressionEl = document.getElementById('expression');
 
     function updateDisplay() {
-      resultEl.textContent = current;
+      resultEl.textContent = calc.display;
+      expressionEl.textContent = calc.expression;
     }
 
-    function input(digit) {
-      if (resetNext) {
-        current = digit;
-        resetNext = false;
-      } else {
-        current = current === '0' ? digit : current + digit;
-      }
-      if (current.length > 12) current = current.slice(0, 12);
-      updateDisplay();
-    }
-
-    function inputDot() {
-      if (resetNext) { current = '0.'; resetNext = false; return updateDisplay(); }
-      if (!current.includes('.')) current += '.';
-      updateDisplay();
-    }
-
-    function setOperator(op) {
-      if (operator && !resetNext) calculate(true);
-      previous = parseFloat(current);
-      operator = op;
-      resetNext = true;
-      const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
-      expressionEl.textContent = `${previous} ${symbols[op]}`;
-    }
-
-    function calculate(chain = false) {
-      if (operator === null || previous === null) return;
-      const a = previous;
-      const b = parseFloat(current);
-      const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
-      if (!chain) expressionEl.textContent = `${a} ${symbols[operator]} ${b} =`;
-      let result;
-      switch (operator) {
-        case '+': result = a + b; break;
-        case '-': result = a - b; break;
-        case '*': result = a * b; break;
-        case '/': result = b === 0 ? 'Ошибка' : a / b; break;
-      }
-      current = result === 'Ошибка' ? 'Ошибка' : parseFloat(result.toFixed(10)).toString();
-      operator = null;
-      previous = null;
-      resetNext = true;
-      updateDisplay();
-    }
-
-    function clearAll() {
-      current = '0';
-      previous = null;
-      operator = null;
-      resetNext = false;
-      expressionEl.textContent = '';
-      updateDisplay();
-    }
-
-    function toggleSign() {
-      current = (parseFloat(current) * -1).toString();
-      updateDisplay();
-    }
-
-    function percent() {
-      current = (parseFloat(current) / 100).toString();
-      updateDisplay();
-    }
+    function onInput(digit)   { calc.input(digit);      updateDisplay(); }
+    function onInputDot()     { calc.inputDot();         updateDisplay(); }
+    function onOperator(op)   { calc.setOperator(op);   updateDisplay(); }
+    function onCalculate()    { calc.calculate();        updateDisplay(); }
+    function onClear()        { calc.clearAll();         updateDisplay(); }
+    function onToggleSign()   { calc.toggleSign();       updateDisplay(); }
+    function onPercent()      { calc.percent();          updateDisplay(); }
 
     document.addEventListener('keydown', (e) => {
-      if (e.key >= '0' && e.key <= '9') input(e.key);
-      else if (e.key === '.') inputDot();
-      else if (e.key === '+') setOperator('+');
-      else if (e.key === '-') setOperator('-');
-      else if (e.key === '*') setOperator('*');
-      else if (e.key === '/') { e.preventDefault(); setOperator('/'); }
-      else if (e.key === 'Enter' || e.key === '=') calculate();
-      else if (e.key === 'Escape') clearAll();
-      else if (e.key === 'Backspace') {
-        current = current.length > 1 ? current.slice(0, -1) : '0';
-        updateDisplay();
-      }
+      if (e.key >= '0' && e.key <= '9') { onInput(e.key); }
+      else if (e.key === '.')                          { onInputDot(); }
+      else if (e.key === '+')                          { onOperator('+'); }
+      else if (e.key === '-')                          { onOperator('-'); }
+      else if (e.key === '*')                          { onOperator('*'); }
+      else if (e.key === '/') { e.preventDefault();     onOperator('/'); }
+      else if (e.key === 'Enter' || e.key === '=')     { onCalculate(); }
+      else if (e.key === 'Escape')                     { onClear(); }
+      else if (e.key === 'Backspace') { calc.backspace(); updateDisplay(); }
     });
   </script>
 </body>
