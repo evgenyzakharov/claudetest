@@ -26,3 +26,33 @@ jobs:
 
       - name: Test with coverage
         run: npm run test:coverage
+
+  review:
+    name: Code Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint report
+        run: npm run lint -- --format stylish || true
+
+      - name: Test summary
+        run: npm test -- --verbose 2>&1 | tee test-results.txt
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.txt
